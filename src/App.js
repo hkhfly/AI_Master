@@ -11,6 +11,9 @@ import jigongImg from './images/jigong/jigong1.jpg';
 import pangImg from './images/pang/panglinzhao1.jpeg';
 import shakyamuniImg from './images/shakyamuni/buddha3.jpg';
 
+import DiscoverView from './components/DiscoverView';
+import { TextEffect } from './components/ui/text-effect';
+
 // --- Assets / Data ---
 const CHARACTERS = [
   {
@@ -85,7 +88,8 @@ const NavIcon = ({ icon, label, active, onClick }) => (
 // --- Main App Component ---
 
 function App() {
-  const [view, setView] = useState('onboarding'); // onboarding, chat, deep, share
+  const [view, setView] = useState('splash'); // splash, onboarding, chat, deep, share
+  const [activeTab, setActiveTab] = useState('chat');
   const [selectedChar, setSelectedChar] = useState(null);
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
@@ -93,6 +97,16 @@ function App() {
   const [isSoundOn, setIsSoundOn] = useState(true);
   const [showShareModal, setShowShareModal] = useState(false);
   const scrollRef = useRef(null);
+
+  // Splash Screen Timer
+  useEffect(() => {
+    if (view === 'splash') {
+      const timer = setTimeout(() => {
+        setView('onboarding');
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [view]);
 
   // Auto-scroll to bottom of chat
   useEffect(() => {
@@ -105,6 +119,7 @@ function App() {
     if (char.locked) return;
     setSelectedChar(char);
     setView('chat');
+    setActiveTab('chat');
     // Initial greeting
     setMessages([
       { id: 1, sender: 'ai', text: `施主好，我是${char.name}。今日有缘相见，不知施主心中有何挂碍，不妨说来听听。`, type: 'text' }
@@ -147,6 +162,37 @@ function App() {
     <div className="iphone-frame">
       <StatusBar />
       
+      {/* --- Splash Screen --- */}
+      {view === 'splash' && (
+        <div style={{ 
+          height: '100%', 
+          width: '100%', 
+          background: 'black', 
+          display: 'flex', 
+          flexDirection: 'column', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          color: 'white',
+          zIndex: 100,
+          position: 'absolute',
+          top: 0,
+          left: 0
+        }}>
+           <div style={{ fontFamily: '"Ma Shan Zheng", cursive', textAlign: 'center' }}>
+              <div style={{ fontSize: '28px', marginBottom: '20px' }}>
+                <TextEffect per='char' preset='fade'>
+                  愿智慧喜乐常伴您左右
+                </TextEffect>
+              </div>
+              <div style={{ fontSize: '18px', textAlign: 'right', marginRight: '20px' }}>
+                <TextEffect per='char' preset='fade' delay={1.2}>
+                   - 胡昆华
+                </TextEffect>
+              </div>
+           </div>
+        </div>
+      )}
+
       {/* --- Onboarding / Character Selection --- */}
       {view === 'onboarding' && (
         <div className="app-content" style={{ padding: '0', display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -209,158 +255,175 @@ function App() {
       {/* --- Chat View --- */}
       {view === 'chat' && selectedChar && (
         <>
-          {/* Header */}
-          <div style={{ 
-            height: '60px', 
-            padding: '0 20px', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'space-between',
-            position: 'absolute',
-            top: '54px',
-            width: '100%',
-            zIndex: 10,
-            background: 'var(--bg)'
-          }}>
-            <ChevronLeft onClick={() => setView('onboarding')} style={{ cursor: 'pointer' }} />
-            <div style={{ textAlign: 'center' }}>
-              <span style={{ fontWeight: 'bold' }}>{selectedChar.name}</span>
-            </div>
-            <div style={{ display: 'flex', gap: '12px' }}>
-               <div onClick={() => setIsSoundOn(!isSoundOn)}>
-                 {isSoundOn ? <Volume2 size={20} /> : <VolumeX size={20} />}
-               </div>
-               <Settings size={20} />
-            </div>
-          </div>
-
-          {/* Messages */}
-          <div 
-            className="app-content" 
-            ref={scrollRef}
-            style={{ paddingTop: '120px', paddingBottom: '140px' }} // Extra padding for header and input
-          >
-            {messages.map((msg) => (
-              <div 
-                key={msg.id} 
-                className="animate-fade-in"
-                style={{ 
-                  display: 'flex', 
-                  justifyContent: msg.sender === 'user' ? 'flex-end' : 'flex-start',
-                  marginBottom: '20px',
-                  padding: '0 20px'
-                }}
-              >
-                {msg.sender === 'ai' && (
-                  <img src={selectedChar.avatar} alt="AI" style={{ width: '36px', height: '36px', borderRadius: '50%', marginRight: '10px' }} />
-                )}
-                <div className={msg.sender === 'user' ? 'chat-bubble-user' : 'chat-bubble-ai'} style={{ padding: '12px 16px', maxWidth: '75%', fontSize: '15px', lineHeight: '1.5' }}>
-                  {msg.text}
-                </div>
-              </div>
-            ))}
-            
-            {/* Suggested Topics if few messages */}
-            {messages.length < 3 && (
-              <div style={{ padding: '0 20px', marginTop: '20px' }}>
-                <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '10px' }}>您可能想问：</p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                  {SUGGESTED_TOPICS.map((topic, i) => (
-                    <button 
-                      key={i}
-                      onClick={() => setInputText(topic)}
-                      style={{ 
-                        background: 'rgba(255,255,255,0.05)', 
-                        border: '1px solid rgba(255,255,255,0.1)', 
-                        color: 'var(--text-secondary)',
-                        padding: '8px 12px',
-                        borderRadius: '16px',
-                        fontSize: '12px',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      {topic}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Input Area */}
-          <div style={{ 
-            position: 'absolute', 
-            bottom: '80px', // Above bottom nav
-            left: 0, 
-            width: '100%', 
-            padding: '12px 20px',
-            background: 'var(--bg)',
-            borderTop: '1px solid rgba(255,255,255,0.05)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px'
-          }}>
-            <button 
-              onClick={() => setIsVoiceMode(!isVoiceMode)}
-              style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
-            >
-              <Mic size={24} color={isVoiceMode ? 'var(--primary)' : 'currentColor'} />
-            </button>
-            
-            <div style={{ flex: 1, position: 'relative' }}>
-               {isVoiceMode ? (
-                 <button style={{ 
-                   width: '100%', 
-                   height: '40px', 
-                   borderRadius: '20px', 
-                   background: 'var(--primary)', 
-                   color: 'white', 
-                   border: 'none',
-                   fontWeight: 'bold'
-                 }}>
-                   按住 说话
-                 </button>
-               ) : (
-                 <input 
-                  type="text" 
-                  value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
-                  placeholder="向大师兄提问..."
-                  onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                  style={{ 
-                    width: '100%', 
-                    height: '40px', 
-                    borderRadius: '20px', 
-                    background: 'var(--surface)', 
-                    border: 'none', 
-                    padding: '0 16px',
-                    color: 'white',
-                    outline: 'none'
-                  }} 
-                />
-               )}
-            </div>
-
-            <button 
-              onClick={handleSendMessage}
-              style={{ 
-                width: '40px', 
-                height: '40px', 
-                borderRadius: '50%', 
-                background: inputText.trim() ? 'var(--primary)' : 'var(--surface)', 
+          {activeTab === 'chat' && (
+            <>
+              {/* Header */}
+              <div style={{ 
+                height: '60px', 
+                padding: '0 20px', 
                 display: 'flex', 
                 alignItems: 'center', 
-                justifyContent: 'center',
-                border: 'none',
-                cursor: 'pointer',
-                transition: 'background 0.2s'
-              }}
-            >
-              <Send size={20} color="white" />
-            </button>
-          </div>
+                justifyContent: 'space-between',
+                position: 'absolute',
+                top: '54px',
+                width: '100%',
+                zIndex: 10,
+                background: 'var(--bg)'
+              }}>
+                <ChevronLeft onClick={() => setView('onboarding')} style={{ cursor: 'pointer' }} />
+                <div style={{ textAlign: 'center' }}>
+                  <span style={{ fontWeight: 'bold' }}>{selectedChar.name}</span>
+                </div>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                   <div onClick={() => setIsSoundOn(!isSoundOn)}>
+                     {isSoundOn ? <Volume2 size={20} /> : <VolumeX size={20} />}
+                   </div>
+                   <Settings size={20} />
+                </div>
+              </div>
+
+              {/* Messages */}
+              <div 
+                className="app-content" 
+                ref={scrollRef}
+                style={{ paddingTop: '120px', paddingBottom: '140px' }} // Extra padding for header and input
+              >
+                {messages.map((msg) => (
+                  <div 
+                    key={msg.id} 
+                    className="animate-fade-in"
+                    style={{ 
+                      display: 'flex', 
+                      justifyContent: msg.sender === 'user' ? 'flex-end' : 'flex-start',
+                      marginBottom: '20px',
+                      padding: '0 20px'
+                    }}
+                  >
+                    {msg.sender === 'ai' && (
+                      <img src={selectedChar.avatar} alt="AI" style={{ width: '36px', height: '36px', borderRadius: '50%', marginRight: '10px' }} />
+                    )}
+                    <div className={msg.sender === 'user' ? 'chat-bubble-user' : 'chat-bubble-ai'} style={{ padding: '12px 16px', maxWidth: '75%', fontSize: '15px', lineHeight: '1.5' }}>
+                      {msg.text}
+                    </div>
+                  </div>
+                ))}
+                
+                {/* Suggested Topics if few messages */}
+                {messages.length < 3 && (
+                  <div style={{ padding: '0 20px', marginTop: '20px' }}>
+                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '10px' }}>您可能想问：</p>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                      {SUGGESTED_TOPICS.map((topic, i) => (
+                        <button 
+                          key={i}
+                          onClick={() => setInputText(topic)}
+                          style={{ 
+                            background: 'rgba(255,255,255,0.05)', 
+                            border: '1px solid rgba(255,255,255,0.1)', 
+                            color: 'var(--text-secondary)',
+                            padding: '8px 12px',
+                            borderRadius: '16px',
+                            fontSize: '12px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {topic}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Input Area */}
+              <div style={{ 
+                position: 'absolute', 
+                bottom: '80px', // Above bottom nav
+                left: 0, 
+                width: '100%', 
+                padding: '12px 20px',
+                background: 'var(--bg)',
+                borderTop: '1px solid rgba(255,255,255,0.05)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px'
+              }}>
+                <button 
+                  onClick={() => setIsVoiceMode(!isVoiceMode)}
+                  style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
+                >
+                  <Mic size={24} color={isVoiceMode ? 'var(--primary)' : 'currentColor'} />
+                </button>
+                
+                <div style={{ flex: 1, position: 'relative' }}>
+                   {isVoiceMode ? (
+                     <button style={{ 
+                       width: '100%', 
+                       height: '40px', 
+                       borderRadius: '20px', 
+                       background: 'var(--primary)', 
+                       color: 'white', 
+                       border: 'none',
+                       fontWeight: 'bold'
+                     }}>
+                       按住 说话
+                     </button>
+                   ) : (
+                     <input 
+                      type="text" 
+                      value={inputText}
+                      onChange={(e) => setInputText(e.target.value)}
+                      placeholder="向大师兄提问..."
+                      onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                      style={{ 
+                        width: '100%', 
+                        height: '40px', 
+                        borderRadius: '20px', 
+                        background: 'var(--surface)', 
+                        border: 'none', 
+                        padding: '0 16px',
+                        color: 'white',
+                        outline: 'none'
+                      }} 
+                    />
+                   )}
+                </div>
+
+                <button 
+                  onClick={handleSendMessage}
+                  style={{ 
+                    width: '40px', 
+                    height: '40px', 
+                    borderRadius: '50%', 
+                    background: inputText.trim() ? 'var(--primary)' : 'var(--surface)', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    border: 'none',
+                    cursor: 'pointer',
+                    transition: 'background 0.2s'
+                  }}
+                >
+                  <Send size={20} color="white" />
+                </button>
+              </div>
+            </>
+          )}
+
+          {activeTab === 'discover' && (
+             <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 5, background: '#0f172a' }}>
+                <DiscoverView />
+             </div>
+          )}
+
+          {activeTab === 'profile' && (
+             <div style={{ paddingTop: 100, textAlign: 'center', color: 'white' }}>
+                <h2>个人中心</h2>
+                <p style={{ color: 'rgba(255,255,255,0.5)', marginTop: 10 }}>功能开发中...</p>
+             </div>
+          )}
           
-          <BottomNav activeTab="chat" setActiveTab={() => {}} />
+          <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
         </>
       )}
 
