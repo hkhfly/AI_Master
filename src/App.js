@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Mic, Send, ChevronLeft, MoreHorizontal, Image as ImageIcon, 
   Share2, Settings, User, HelpCircle, Info, Lock, 
-  MessageCircle, Compass, Home, Volume2, VolumeX, X
+  MessageCircle, Compass, Home, Volume2, VolumeX, X,
+  ArrowLeftRight, Phone, MessageSquarePlus, Clock, PlusCircle
 } from 'lucide-react';
 import './App.css';
 
@@ -96,6 +97,8 @@ function App() {
   const [isVoiceMode, setIsVoiceMode] = useState(false);
   const [isSoundOn, setIsSoundOn] = useState(true);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [isCallMode, setIsCallMode] = useState(false);
   const scrollRef = useRef(null);
 
   // Splash Screen Timer
@@ -268,17 +271,30 @@ function App() {
                 top: '54px',
                 width: '100%',
                 zIndex: 10,
-                background: 'var(--bg)'
+                background: 'var(--bg)',
+                borderBottom: '1px solid rgba(255,255,255,0.05)'
               }}>
-                <ChevronLeft onClick={() => setView('onboarding')} style={{ cursor: 'pointer' }} />
-                <div style={{ textAlign: 'center' }}>
-                  <span style={{ fontWeight: 'bold' }}>{selectedChar.name}</span>
+                {/* Top Left: Conversation Management */}
+                <button onClick={() => setShowHistory(true)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}>
+                  <MessageSquarePlus size={24} />
+                </button>
+
+                {/* Top Center: Character Name + Switch */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontWeight: 'bold', fontSize: '17px' }}>{selectedChar.name}</span>
+                  <button onClick={() => setView('onboarding')} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: 0 }}>
+                    <ArrowLeftRight size={16} />
+                  </button>
                 </div>
-                <div style={{ display: 'flex', gap: '12px' }}>
-                   <div onClick={() => setIsSoundOn(!isSoundOn)}>
-                     {isSoundOn ? <Volume2 size={20} /> : <VolumeX size={20} />}
+
+                {/* Top Right: TTS + Call */}
+                <div style={{ display: 'flex', gap: '16px' }}>
+                   <div onClick={() => setIsSoundOn(!isSoundOn)} style={{ cursor: 'pointer', color: isSoundOn ? 'white' : 'var(--text-secondary)' }}>
+                     {isSoundOn ? <Volume2 size={24} /> : <VolumeX size={24} />}
                    </div>
-                   <Settings size={20} />
+                   <div onClick={() => setIsCallMode(true)} style={{ cursor: 'pointer' }}>
+                     <Phone size={24} />
+                   </div>
                 </div>
               </div>
 
@@ -299,16 +315,23 @@ function App() {
                       padding: '0 20px'
                     }}
                   >
-                    {msg.sender === 'ai' && (
-                      <img src={selectedChar.avatar} alt="AI" style={{ width: '36px', height: '36px', borderRadius: '50%', marginRight: '10px' }} />
-                    )}
-                    <div className={msg.sender === 'user' ? 'chat-bubble-user' : 'chat-bubble-ai'} style={{ padding: '12px 16px', maxWidth: '75%', fontSize: '15px', lineHeight: '1.5' }}>
+                    {/* No Avatar for Chat Bubbles as per request */}
+                    <div 
+                      className={msg.sender === 'user' ? 'chat-bubble-user' : 'chat-bubble-ai'} 
+                      style={{ 
+                        padding: '12px 16px', 
+                        maxWidth: '75%', 
+                        fontSize: '15px', 
+                        lineHeight: '1.6',
+                        position: 'relative'
+                      }}
+                    >
                       {msg.text}
                     </div>
                   </div>
                 ))}
                 
-                {/* Suggested Topics if few messages */}
+                {/* Suggested Topics */}
                 {messages.length < 3 && (
                   <div style={{ padding: '0 20px', marginTop: '20px' }}>
                     <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '10px' }}>您可能想问：</p>
@@ -341,21 +364,32 @@ function App() {
                 bottom: '80px', // Above bottom nav
                 left: 0, 
                 width: '100%', 
-                padding: '12px 20px',
+                padding: '12px 16px',
                 background: 'var(--bg)',
                 borderTop: '1px solid rgba(255,255,255,0.05)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px'
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '12px'
               }}>
+                {/* Mic Button */}
                 <button 
                   onClick={() => setIsVoiceMode(!isVoiceMode)}
-                  style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
+                  style={{ 
+                     width: '36px', height: '36px', 
+                     borderRadius: '50%', 
+                     border: '1px solid rgba(255,255,255,0.2)',
+                     background: isVoiceMode ? 'var(--primary)' : 'transparent', 
+                     color: isVoiceMode ? 'white' : 'var(--text-secondary)',
+                     display: 'flex', alignItems: 'center', justifyContent: 'center',
+                     cursor: 'pointer',
+                     flexShrink: 0
+                  }}
                 >
-                  <Mic size={24} color={isVoiceMode ? 'var(--primary)' : 'currentColor'} />
+                  <Mic size={20} />
                 </button>
                 
-                <div style={{ flex: 1, position: 'relative' }}>
+                {/* Input / Voice Hold */}
+                <div style={{ flex: 1 }}>
                    {isVoiceMode ? (
                      <button style={{ 
                        width: '100%', 
@@ -383,30 +417,93 @@ function App() {
                         border: 'none', 
                         padding: '0 16px',
                         color: 'white',
-                        outline: 'none'
+                        outline: 'none',
+                        fontSize: '15px'
                       }} 
                     />
                    )}
                 </div>
 
+                {/* Send Button */}
                 <button 
                   onClick={handleSendMessage}
+                  disabled={!inputText.trim() && !isVoiceMode}
                   style={{ 
                     width: '40px', 
                     height: '40px', 
                     borderRadius: '50%', 
-                    background: inputText.trim() ? 'var(--primary)' : 'var(--surface)', 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center',
+                    background: inputText.trim() ? 'var(--primary)' : 'var(--surface-light)', 
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
                     border: 'none',
                     cursor: 'pointer',
+                    color: 'white',
+                    opacity: inputText.trim() ? 1 : 0.5,
+                    flexShrink: 0,
                     transition: 'background 0.2s'
                   }}
                 >
-                  <Send size={20} color="white" />
+                  <Send size={20} />
+                </button>
+
+                {/* Image Button */}
+                <button 
+                  style={{ 
+                     background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer',
+                     display: 'flex', alignItems: 'center',
+                     flexShrink: 0
+                  }}
+                >
+                  <ImageIcon size={24} />
                 </button>
               </div>
+
+              {/* --- History Drawer (Overlay) --- */}
+              {showHistory && (
+                 <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 100 }}>
+                    <div onClick={() => setShowHistory(false)} style={{ position: 'absolute', width: '100%', height: '100%', background: 'rgba(0,0,0,0.5)' }}></div>
+                    <div style={{ 
+                       position: 'absolute', top: 0, left: 0, width: '75%', height: '100%', 
+                       background: 'var(--surface)', padding: '60px 20px',
+                       boxShadow: '4px 0 20px rgba(0,0,0,0.5)',
+                       display: 'flex', flexDirection: 'column'
+                    }}>
+                       <div style={{ marginBottom: '30px' }}>
+                          <button onClick={() => { setMessages([]); setShowHistory(false); }} style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '12px', background: 'var(--primary)', border: 'none', borderRadius: '8px', color: 'white', fontWeight: 'bold' }}>
+                             <PlusCircle size={20} /> 新建对话
+                          </button>
+                       </div>
+                       <h3 style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '16px' }}>历史对话</h3>
+                       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}>
+                             <MessageCircle size={16} color="var(--text-secondary)" />
+                             <span style={{ fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>关于人生的意义...</span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}>
+                             <MessageCircle size={16} color="var(--text-secondary)" />
+                             <span style={{ fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>佛法入门书籍推荐</span>
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+              )}
+
+              {/* --- Call Mode Overlay --- */}
+              {isCallMode && (
+                 <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'var(--bg)', zIndex: 110, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                    <div className="animate-pulse" style={{ width: '120px', height: '120px', borderRadius: '50%', background: 'rgba(114, 65, 242, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '40px' }}>
+                       <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <Phone size={40} color="white" />
+                       </div>
+                    </div>
+                    <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '10px' }}>{selectedChar.name}</h2>
+                    <p style={{ color: 'var(--text-secondary)' }}>正在通话中...</p>
+                    
+                    <button onClick={() => setIsCallMode(false)} style={{ marginTop: '60px', width: '64px', height: '64px', borderRadius: '50%', background: '#FF324D', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                       <X size={32} />
+                    </button>
+                 </div>
+              )}
+
             </>
           )}
 
@@ -505,23 +602,21 @@ function App() {
                </p>
                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #eee', paddingTop: '16px' }}>
                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                   <div style={{ width: '32px', height: '32px', background: 'var(--primary)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold' }}>AI</div>
-                   <span style={{ fontWeight: 'bold', fontSize: '14px' }}>AI大师兄</span>
+                   <div style={{ width: '40px', height: '40px', background: '#7241F2', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold' }}>AI</div>
+                   <div>
+                     <div style={{ fontSize: '14px', fontWeight: 'bold' }}>AI大师兄</div>
+                     <div style={{ fontSize: '10px', color: '#999' }}>长按识别二维码</div>
+                   </div>
                  </div>
-                 <div style={{ width: '40px', height: '40px', background: '#000', borderRadius: '4px' }}></div> {/* Fake QR */}
+                 <div style={{ width: '50px', height: '50px', background: '#eee' }}></div>
                </div>
             </div>
           </div>
-          
-          <button 
-             onClick={closeShareModal}
-             style={{ marginTop: '30px', background: 'transparent', border: '1px solid white', color: 'white', padding: '10px 24px', borderRadius: '20px' }}
-          >
-            关闭 / 返回
+          <button onClick={closeShareModal} style={{ marginTop: '30px', background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '50%', width: '50px', height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+            <X size={24} />
           </button>
         </div>
       )}
-
     </div>
   );
 }
