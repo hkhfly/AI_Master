@@ -88,6 +88,8 @@ const NavIcon = ({ icon, label, active, onClick }) => (
 
 // --- Main App Component ---
 
+import FluidDropdown from './components/ui/FluidDropdown';
+
 function App() {
   const [view, setView] = useState('splash'); // splash, onboarding, chat, deep, share
   const [activeTab, setActiveTab] = useState('chat');
@@ -468,24 +470,21 @@ function App() {
                        display: 'flex', flexDirection: 'column'
                     }}>
                        <div style={{ marginBottom: '30px' }}>
-                          <button onClick={() => { setMessages([]); setShowHistory(false); }} style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '12px', background: 'var(--primary)', border: 'none', borderRadius: '8px', color: 'white', fontWeight: 'bold' }}>
-                             <PlusCircle size={20} /> 新建对话
-                          </button>
-                       </div>
-                       <h3 style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '16px' }}>历史对话</h3>
-                       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}>
-                             <MessageCircle size={16} color="var(--text-secondary)" />
-                             <span style={{ fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>关于人生的意义...</span>
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}>
-                             <MessageCircle size={16} color="var(--text-secondary)" />
-                             <span style={{ fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>佛法入门书籍推荐</span>
-                          </div>
-                       </div>
-                    </div>
-                 </div>
-              )}
+                <button onClick={() => { setMessages([]); setShowHistory(false); }} style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '12px', background: 'var(--primary)', border: 'none', borderRadius: '8px', color: 'white', fontWeight: 'bold' }}>
+                  <PlusCircle size={20} /> 新建对话
+                </button>
+              </div>
+              <h3 style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '16px' }}>历史对话</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <FluidDropdown onSelect={(item) => {
+                  console.log("Selected history:", item);
+                  setShowHistory(false);
+                  // Optionally load history logic here
+                }} />
+              </div>
+            </div>
+          </div>
+        )}
 
               {/* --- Call Mode Overlay --- */}
               {isCallMode && (
