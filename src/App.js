@@ -15,6 +15,8 @@ import shakyamuniImg from './images/shakyamuni/buddha3.jpg';
 import DiscoverView from './components/DiscoverView';
 import { TextEffect } from './components/ui/text-effect';
 
+import FluidDropdown from './components/ui/FluidDropdown';
+
 // --- Assets / Data ---
 const CHARACTERS = [
   {
@@ -87,8 +89,6 @@ const NavIcon = ({ icon, label, active, onClick }) => (
 );
 
 // --- Main App Component ---
-
-import FluidDropdown from './components/ui/FluidDropdown';
 
 function App() {
   const [view, setView] = useState('splash'); // splash, onboarding, chat, deep, share

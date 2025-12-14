@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
 import { ChevronDown, MessageCircle } from 'lucide-react';
-import { cn } from '../../lib/utils';
 
 // Custom hook for click outside detection
 function useClickAway(ref, handler) {
@@ -22,26 +21,6 @@ function useClickAway(ref, handler) {
     };
   }, [ref, handler]);
 }
-
-// Button component
-const Button = React.forwardRef(({ className, variant, children, ...props }, ref) => {
-  return (
-    <button
-      ref={ref}
-      className={cn(
-        "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
-        "disabled:pointer-events-none disabled:opacity-50",
-        variant === "outline" && "border border-neutral-700 bg-transparent",
-        className
-      )}
-      {...props}
-    >
-      {children}
-    </button>
-  );
-});
-Button.displayName = "Button";
 
 // Demo Data - 10 History Items
 const historyItems = [
@@ -65,20 +44,19 @@ const truncate = (text, maxLength = 12) => {
 // Icon wrapper with animation
 const IconWrapper = ({ icon: Icon, isHovered, color }) => (
   <motion.div 
-    className="w-4 h-4 mr-2 relative" 
+    style={{ width: '16px', height: '16px', marginRight: '8px', position: 'relative' }}
     initial={false} 
     animate={isHovered ? { scale: 1.2 } : { scale: 1 }}
   >
-    <Icon className="w-4 h-4" />
+    <Icon size={16} />
     {isHovered && (
       <motion.div
-        className="absolute inset-0"
-        style={{ color }}
+        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', color: color }}
         initial={{ pathLength: 0, opacity: 0 }}
         animate={{ pathLength: 1, opacity: 1 }}
         transition={{ duration: 0.5, ease: "easeInOut" }}
       >
-        <Icon className="w-4 h-4" strokeWidth={2} />
+        <Icon size={16} strokeWidth={2} />
       </motion.div>
     )}
   </motion.div>
@@ -91,7 +69,7 @@ const containerVariants = {
     opacity: 1,
     transition: {
       when: "beforeChildren",
-      staggerChildren: 0.05, // Slightly faster stagger for 10 items
+      staggerChildren: 0.05,
     },
   },
 };
@@ -125,24 +103,33 @@ export default function FluidDropdown({ onSelect }) {
   return (
     <MotionConfig reducedMotion="user">
       <div
-        className="w-full relative"
         ref={dropdownRef}
-        style={{ zIndex: 200 }} 
+        style={{ width: '100%', position: 'relative', zIndex: 200 }} 
       >
-        <Button
-          variant="outline"
+        <motion.button
           onClick={() => setIsOpen(!isOpen)}
-          className={cn(
-            "w-full justify-between bg-[rgba(255,255,255,0.05)] text-white border-none", // Adapted styles for dark theme
-            "hover:bg-[rgba(255,255,255,0.1)]",
-            "transition-all duration-200 ease-in-out",
-            "h-12 px-4 rounded-xl",
-            isOpen && "bg-[rgba(255,255,255,0.1)]"
-          )}
+          whileTap={{ scale: 0.98 }}
+          style={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            background: isOpen ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.05)',
+            color: 'white',
+            border: 'none',
+            height: '48px',
+            padding: '0 16px',
+            borderRadius: '12px',
+            cursor: 'pointer',
+            transition: 'background 0.2s ease-in-out',
+            outline: 'none',
+            fontSize: '14px',
+            fontWeight: 500
+          }}
           aria-expanded={isOpen}
           aria-haspopup="true"
         >
-          <span className="flex items-center">
+          <span style={{ display: 'flex', alignItems: 'center' }}>
             <IconWrapper 
               icon={selectedItem.icon} 
               isHovered={false} 
@@ -153,11 +140,11 @@ export default function FluidDropdown({ onSelect }) {
           <motion.div
             animate={{ rotate: isOpen ? 180 : 0 }}
             transition={{ duration: 0.2 }}
-            className="flex items-center justify-center w-5 h-5"
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '20px', height: '20px' }}
           >
-            <ChevronDown className="w-4 h-4" />
+            <ChevronDown size={16} />
           </motion.div>
-        </Button>
+        </motion.button>
 
         <AnimatePresence>
           {isOpen && (
@@ -185,36 +172,53 @@ export default function FluidDropdown({ onSelect }) {
                   mass: 1,
                 },
               }}
-              className="absolute left-0 right-0 top-full mt-2 overflow-hidden z-[201]" // High z-index
+              style={{
+                position: 'absolute',
+                left: 0,
+                right: 0,
+                top: '100%',
+                marginTop: '8px',
+                overflow: 'hidden',
+                zIndex: 201
+              }}
               onKeyDown={handleKeyDown}
             >
               <motion.div
-                className="w-full rounded-xl bg-[#1e1e1e] border border-[rgba(255,255,255,0.1)] shadow-2xl overflow-hidden" // Dark theme styles
+                style={{
+                  width: '100%',
+                  background: '#1e1e1e',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
+                  transformOrigin: 'top',
+                  overflow: 'hidden'
+                }}
                 initial={{ borderRadius: 8 }}
                 animate={{
                   borderRadius: 12,
                   transition: { duration: 0.2 },
                 }}
-                style={{ transformOrigin: "top" }}
               >
                 <motion.div 
-                  className="py-2 relative max-h-[400px] overflow-y-auto custom-scrollbar" // Added scroll for 10 items
+                  style={{ padding: '8px 0', position: 'relative', maxHeight: '400px', overflowY: 'auto' }}
                   variants={containerVariants} 
                   initial="hidden" 
                   animate="visible"
                 >
-                   {/* Hover Highlight Logic - Simplified for list with scroll or removed if too complex to sync with scroll. 
-                       Keeping it simple for now, using hover state on button directly instead of absolute div for simplicity in overflow.
-                       Wait, the original used absolute positioning for highlight. 
-                       If I add scroll, the absolute highlight might misalign.
-                       Let's keep the list full height for now (400px is enough for 10 items).
-                   */}
                   <motion.div
                     layoutId="hover-highlight"
-                    className="absolute inset-x-1 bg-[rgba(255,255,255,0.05)] rounded-md pointer-events-none"
+                    style={{
+                      position: 'absolute',
+                      left: '4px',
+                      right: '4px',
+                      background: 'rgba(255,255,255,0.05)',
+                      borderRadius: '6px',
+                      pointerEvents: 'none',
+                      // Simple calculation for Y position based on item height (40px approx) + padding
+                      // This might be tricky with scroll, but let's try
+                    }}
                     initial={false}
                     animate={{
-                      y: historyItems.findIndex((c) => (hoveredItem || selectedItem.id) === c.id) * 40 + 8, // 8px top padding offset
+                      y: historyItems.findIndex((c) => (hoveredItem || selectedItem.id) === c.id) * 40 + 8, 
                       height: 40,
                       opacity: (hoveredItem || selectedItem) ? 1 : 0
                     }}
@@ -235,14 +239,23 @@ export default function FluidDropdown({ onSelect }) {
                         }}
                         onHoverStart={() => setHoveredItem(item.id)}
                         onHoverEnd={() => setHoveredItem(null)}
-                        className={cn(
-                          "relative flex w-full items-center px-4 py-2.5 text-sm rounded-md z-10",
-                          "transition-colors duration-150",
-                          "focus:outline-none",
-                          selectedItem.id === item.id || hoveredItem === item.id
-                            ? "text-white"
-                            : "text-neutral-400",
-                        )}
+                        style={{
+                          position: 'relative',
+                          display: 'flex',
+                          width: '100%',
+                          alignItems: 'center',
+                          padding: '10px 16px', // Matches 40px height approx
+                          height: '40px',
+                          fontSize: '14px',
+                          borderRadius: '6px',
+                          zIndex: 10,
+                          background: 'transparent',
+                          border: 'none',
+                          cursor: 'pointer',
+                          color: (selectedItem.id === item.id || hoveredItem === item.id) ? 'white' : '#9CA3AF',
+                          textAlign: 'left',
+                          outline: 'none'
+                        }}
                         whileTap={{ scale: 0.98 }}
                         variants={itemVariants}
                       >
