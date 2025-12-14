@@ -16,6 +16,7 @@ import DiscoverView from './components/DiscoverView';
 import { TextEffect } from './components/ui/text-effect';
 
 import FluidDropdown from './components/ui/FluidDropdown';
+import { chatScripts } from './data/chatScripts';
 
 // --- Assets / Data ---
 const CHARACTERS = [
@@ -99,6 +100,7 @@ function App() {
   const [showShareModal, setShowShareModal] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [isCallMode, setIsCallMode] = useState(false);
+  const [activeScript, setActiveScript] = useState(null);
   const scrollRef = useRef(null);
 
   // Splash Screen Timer
@@ -117,6 +119,89 @@ function App() {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+
+  // Script Runner Effect
+  useEffect(() => {
+    if (!activeScript) return;
+    
+    const script = chatScripts[activeScript.topic];
+    if (!script || activeScript.step >= script.length) {
+      setActiveScript(null);
+      return;
+    }
+
+    const currentLine = script[activeScript.step];
+
+    // Handle IDLE state -> Transition to specific action
+    if (activeScript.status === 'idle') {
+      if (currentLine.role === 'user') {
+        setActiveScript(prev => ({ ...prev, status: 'user-typing' }));
+      } else {
+        setActiveScript(prev => ({ ...prev, status: 'ai-thinking' }));
+      }
+    }
+
+    // Handle User Typing
+    if (activeScript.status === 'user-typing') {
+      let charIndex = 0;
+      const text = currentLine.text;
+      const interval = setInterval(() => {
+        charIndex++;
+        setInputText(text.substring(0, charIndex));
+        if (charIndex >= text.length) {
+          clearInterval(interval);
+          setTimeout(() => {
+            // Send
+            setMessages(prev => [...prev, { id: Date.now(), sender: 'user', text: text, type: 'text' }]);
+            setInputText('');
+            setActiveScript(prev => ({ ...prev, step: prev.step + 1, status: 'idle' }));
+          }, 500);
+        }
+      }, 50);
+      return () => clearInterval(interval);
+    }
+
+    // Handle AI Thinking
+    if (activeScript.status === 'ai-thinking') {
+      const timer = setTimeout(() => {
+        setMessages(prev => [...prev, { id: Date.now(), sender: 'ai', text: '', type: 'text' }]);
+        setActiveScript(prev => ({ ...prev, status: 'ai-typing' }));
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+
+    // Handle AI Typing
+    if (activeScript.status === 'ai-typing') {
+      let charIndex = 0;
+      const text = currentLine.text;
+      const interval = setInterval(() => {
+        charIndex++;
+        const currentText = text.substring(0, charIndex);
+        setMessages(prev => {
+          const newMsgs = [...prev];
+          if (newMsgs.length > 0) {
+             newMsgs[newMsgs.length - 1].text = currentText;
+          }
+          return newMsgs;
+        });
+        if (charIndex >= text.length) {
+          clearInterval(interval);
+          setActiveScript(prev => ({ ...prev, step: prev.step + 1, status: 'idle' }));
+        }
+      }, 30);
+      return () => clearInterval(interval);
+    }
+
+  }, [activeScript]);
+
+  const handleTopicSelect = (topic) => {
+    if (chatScripts[topic]) {
+       setMessages([]);
+       setActiveScript({ topic, step: 0, status: 'idle' });
+    } else {
+       setInputText(topic);
+    }
+  };
 
   const handleCharSelect = (char) => {
     if (char.locked) return;
@@ -339,7 +424,7 @@ function App() {
                       {SUGGESTED_TOPICS.map((topic, i) => (
                         <button 
                           key={i}
-                          onClick={() => setInputText(topic)}
+                          onClick={() => handleTopicSelect(topic)}
                           style={{ 
                             background: 'rgba(255,255,255,0.05)', 
                             border: '1px solid rgba(255,255,255,0.1)', 
@@ -406,9 +491,10 @@ function App() {
                      <input 
                       type="text" 
                       value={inputText}
-                      onChange={(e) => setInputText(e.target.value)}
-                      placeholder="向大师兄提问..."
-                      onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                      onChange={(e) => !activeScript && setInputText(e.target.value)}
+                      readOnly={!!activeScript}
+                      placeholder={activeScript ? "正在模拟对话..." : "向大师兄提问..."}
+                      onKeyDown={(e) => e.key === 'Enter' && !activeScript && handleSendMessage()}
                       style={{ 
                         width: '100%', 
                         height: '40px', 
@@ -427,7 +513,7 @@ function App() {
                 {/* Send Button */}
                 <button 
                   onClick={handleSendMessage}
-                  disabled={!inputText.trim() && !isVoiceMode}
+                  disabled={(!inputText.trim() && !isVoiceMode) || !!activeScript}
                   style={{ 
                     width: '40px', 
                     height: '40px', 
