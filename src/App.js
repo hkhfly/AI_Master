@@ -135,10 +135,18 @@ function App() {
     // Handle IDLE state -> Transition to specific action
     if (activeScript.status === 'idle') {
       if (currentLine.role === 'user') {
-        setActiveScript(prev => ({ ...prev, status: 'user-typing' }));
+        setActiveScript(prev => ({ ...prev, status: 'waiting-user' }));
       } else {
         setActiveScript(prev => ({ ...prev, status: 'ai-thinking' }));
       }
+    }
+
+    // Handle Waiting for User (Delay)
+    if (activeScript.status === 'waiting-user') {
+      const timer = setTimeout(() => {
+        setActiveScript(prev => ({ ...prev, status: 'user-typing' }));
+      }, 1000);
+      return () => clearTimeout(timer);
     }
 
     // Handle User Typing
@@ -163,10 +171,22 @@ function App() {
 
     // Handle AI Thinking
     if (activeScript.status === 'ai-thinking') {
+      // Add thinking bubble if not present
+      setMessages(prev => {
+        const lastMsg = prev[prev.length - 1];
+        if (lastMsg?.isThinking) return prev;
+        return [...prev, { id: 'thinking', sender: 'ai', isThinking: true }];
+      });
+
+      const thinkTime = Math.floor(Math.random() * 2000) + 1000; // 1-3 seconds
+
       const timer = setTimeout(() => {
-        setMessages(prev => [...prev, { id: Date.now(), sender: 'ai', text: '', type: 'text' }]);
+        setMessages(prev => {
+          // Replace thinking bubble with empty text bubble
+          return prev.map(msg => msg.isThinking ? { id: Date.now(), sender: 'ai', text: '', type: 'text' } : msg);
+        });
         setActiveScript(prev => ({ ...prev, status: 'ai-typing' }));
-      }, 1500);
+      }, thinkTime);
       return () => clearTimeout(timer);
     }
 
@@ -411,13 +431,21 @@ function App() {
                         position: 'relative'
                       }}
                     >
-                      {msg.text}
+                      {msg.isThinking ? (
+                        <div className="typing-indicator">
+                          <div className="typing-dot"></div>
+                          <div className="typing-dot"></div>
+                          <div className="typing-dot"></div>
+                        </div>
+                      ) : (
+                        msg.text
+                      )}
                     </div>
                   </div>
                 ))}
                 
                 {/* Suggested Topics */}
-                {messages.length < 3 && (
+                {!activeScript && messages.length < 3 && (
                   <div style={{ padding: '0 20px', marginTop: '20px' }}>
                     <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '10px' }}>您可能想问：</p>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
