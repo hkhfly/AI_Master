@@ -9,10 +9,12 @@ import './App.css';
 
 // --- Local Images ---
 import jigongImg from './images/jigong/jigong1.jpg';
-import jigongVideo from './images/jigong/video_jigong1.mp4';
 import pangImg from './images/pang/panglinzhao1.jpeg';
-import pangVideo from './images/pang/video_pang1.mp4';
 import shakyamuniImg from './images/shakyamuni/buddha3.jpg';
+
+// --- Local Videos ---
+import jigongVideo from './images/jigong/video_jigong1.mp4';
+import pangVideo from './images/pang/video_pang1.mp4';
 
 import DiscoverView from './components/DiscoverView';
 import { TextEffect } from './components/ui/text-effect';
@@ -28,6 +30,7 @@ const CHARACTERS = [
     title: '自在逍遥',
     desc: '鞋儿破，帽儿破，身上的袈裟破。嬉笑怒骂，皆是禅机。',
     avatar: jigongImg,
+    video: jigongVideo,
     style: 'realistic',
     locked: false,
     color: '#7241F2'
@@ -38,6 +41,7 @@ const CHARACTERS = [
     title: '清净智慧',
     desc: '庞居士之女，灵照蕴空。可爱俏皮，智慧过人。',
     avatar: pangImg,
+    video: pangVideo,
     style: 'cartoon',
     locked: false,
     color: '#00B75E'
@@ -103,9 +107,9 @@ function App() {
   const [showHistory, setShowHistory] = useState(false);
   const [isCallMode, setIsCallMode] = useState(false);
   const [activeScript, setActiveScript] = useState(null);
-  const [playingVideo, setPlayingVideo] = useState(null);
-  const [transitionStage, setTransitionStage] = useState('idle'); // idle, playing, transitioning
+  const [pushingCardId, setPushingCardId] = useState(null);
   const scrollRef = useRef(null);
+  const videoRefs = useRef({});
 
   // Splash Screen Timer
   useEffect(() => {
@@ -229,36 +233,38 @@ function App() {
 
   const handleCharSelect = (char) => {
     if (char.locked) return;
-    
-    // Video Playback & Transition Logic
-    if (char.id === 'jigong' || char.id === 'pang') {
-       setPlayingVideo(char.id);
-       setTransitionStage('playing');
-       
-       // Wait 1s (video plays), then start transition
-       setTimeout(() => {
-         setTransitionStage('transitioning');
-         
-         // Wait 0.5s (transition duration), then switch view
-         setTimeout(() => {
-            finishSelection(char);
-         }, 500);
-       }, 1000);
-    } else {
-       finishSelection(char);
-    }
-  };
-
-  const finishSelection = (char) => {
     setSelectedChar(char);
     setView('chat');
     setActiveTab('chat');
-    setPlayingVideo(null);
-    setTransitionStage('idle');
     // Initial greeting
     setMessages([
       { id: 1, sender: 'ai', text: `施主好，我是${char.name}。今日有缘相见，不知施主心中有何挂碍，不妨说来听听。`, type: 'text' }
     ]);
+  };
+
+  const handleCardClick = (char) => {
+    if (char.locked) return;
+    
+    if (char.video) {
+        // Play video
+        const videoEl = videoRefs.current[char.id];
+        if (videoEl) {
+            videoEl.play();
+            // Wait 1s then start animation
+            setTimeout(() => {
+                setPushingCardId(char.id);
+                // Wait 0.5s (animation duration) then navigate
+                setTimeout(() => {
+                    handleCharSelect(char);
+                    setPushingCardId(null); // Reset
+                }, 500);
+            }, 1000);
+        } else {
+             handleCharSelect(char);
+        }
+    } else {
+        handleCharSelect(char);
+    }
   };
 
   const handleSendMessage = () => {
@@ -330,14 +336,7 @@ function App() {
 
       {/* --- Onboarding / Character Selection --- */}
       {view === 'onboarding' && (
-        <div 
-          className={`app-content ${
-             transitionStage === 'transitioning' 
-               ? (playingVideo === 'jigong' ? 'slide-out-left' : 'slide-out-right') 
-               : ''
-          }`}
-          style={{ padding: '0', display: 'flex', flexDirection: 'column', height: '100%' }}
-        >
+        <div className="app-content" style={{ padding: '0', display: 'flex', flexDirection: 'column', height: '100%' }}>
           <div style={{ padding: '20px 20px 10px 20px', flexShrink: 0 }}>
             <h1 style={{ 
               fontSize: '28px', 
@@ -360,44 +359,38 @@ function App() {
             {CHARACTERS.map((char, index) => (
               <div 
                 key={char.id} 
-                onClick={() => handleCharSelect(char)}
-                className={`character-card animate-fade-in ${char.locked ? 'locked' : ''}`}
+                onClick={() => handleCardClick(char)}
+                className={`character-card animate-fade-in ${char.locked ? 'locked' : ''} ${pushingCardId === char.id ? 'push-animation' : ''}`}
                 style={{ 
                   borderColor: selectedChar?.id === char.id ? char.color : 'transparent',
                   flex: 1, /* Distribute height equally */
                   height: 'auto',
                   borderRadius: 0,
-                  animationDelay: `${index * 0.1}s`,
-                  position: 'relative'
+                  animationDelay: `${index * 0.1}s`
                 }}
               >
-                {/* Background Image */}
-                <div className="card-bg" style={{ backgroundImage: `url(${char.avatar})` }}></div>
-
-                {/* Video Overlay */}
-                {playingVideo === char.id && (
+                {/* Background Image or Video */}
+                {char.video ? (
                   <video 
-                    src={char.id === 'jigong' ? jigongVideo : pangVideo}
-                    autoPlay 
+                    ref={el => videoRefs.current[char.id] = el}
+                    src={char.video} 
                     muted 
                     playsInline 
                     className="card-bg"
-                    style={{ 
-                      objectFit: 'cover', 
-                      zIndex: 2,
-                      position: 'absolute', top: 0, left: 0, width: '100%', height: '100%'
-                    }}
+                    style={{ objectFit: 'cover' }}
                   />
+                ) : (
+                  <div className="card-bg" style={{ backgroundImage: `url(${char.avatar})` }}></div>
                 )}
                 
                 {/* Overlay Gradient */}
-                <div className="card-overlay" style={{ zIndex: 3 }}></div>
+                <div className="card-overlay"></div>
 
                 {/* Locked Overlay */}
-                {char.locked && <div className="card-locked-overlay" style={{ zIndex: 4 }}><Lock size={32} color="white" /></div>}
+                {char.locked && <div className="card-locked-overlay"><Lock size={32} color="white" /></div>}
 
                 {/* Content */}
-                <div className="card-content" style={{ padding: '20px 24px', zIndex: 4 }}>
+                <div className="card-content" style={{ padding: '20px 24px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                     <div>
                       <h3 style={{ margin: 0, fontSize: '24px', fontWeight: 'bold', color: char.color }}>{char.name}</h3>

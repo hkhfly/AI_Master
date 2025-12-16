@@ -1,115 +1,137 @@
-@import url('https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap');
-
 :root {
+  --primary: #7241F2;
+  --primary-dark: #5b32c6;
+  --secondary: #F1F2F6;
+  --accent: #FF324D;
   --bg: #131518;
   --surface: #1E2126;
-  --surface-light: #2C3036;
-  --primary: #7241F2; /* Default Purple */
-  --accent: #FF324D;
+  --surface-light: #2A2D35;
   --text-primary: #FFFFFF;
-  --text-secondary: #8E9399;
+  --text-secondary: #A1A1AA;
+  --success: #00B75E;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
-  margin: 0;
-  padding: 0;
   background-color: #000;
   color: var(--text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  overflow: hidden;
+  overflow: hidden; /* Prevent body scroll, handle inside frame */
 }
 
+/* iPhone 16 Mockup Frame */
 .iphone-frame {
-  width: 100%;
-  height: 100vh;
-  max-width: 430px; /* iPhone 14/15/16 Pro Max width approx */
-  max-height: 932px;
+  width: 393px; /* iPhone 16 width */
+  height: 852px; /* iPhone 16 height */
   background-color: var(--bg);
+  border-radius: 50px;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 0 50px rgba(0,0,0,0.5);
+  box-shadow: 0 0 0 12px #333, 0 0 50px rgba(0,0,0,0.5);
   display: flex;
   flex-direction: column;
 }
 
-/* Status Bar */
+/* Dynamic Island / Notch Area */
 .status-bar {
   height: 54px;
   width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 50;
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 0 24px;
   font-size: 16px;
   font-weight: 600;
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 1000;
   color: white;
-  background: var(--bg); /* Match theme background to prevent overlap issues */
+  background: var(--bg); /* Fixed: opaque background to hide scrolling content */
 }
 
 .dynamic-island {
-  width: 120px;
-  height: 36px;
-  background: black;
-  border-radius: 20px;
   position: absolute;
+  top: 11px;
   left: 50%;
   transform: translateX(-50%);
-  top: 11px;
+  width: 120px;
+  height: 35px;
+  background: #000;
+  border-radius: 20px;
+  z-index: 51;
 }
 
-/* Bottom Nav */
+/* Scrollable Content Area */
+.app-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  padding-top: 54px; /* Status bar height */
+  padding-bottom: 80px; /* Nav bar height */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.app-content::-webkit-scrollbar {
+  display: none;
+}
+
+/* Bottom Navigation */
 .bottom-nav {
-  height: 83px; /* Standard iOS Tab Bar height */
-  width: 100%;
-  background: rgba(30, 33, 38, 0.95); /* Glassmorphism */
-  backdrop-filter: blur(20px);
   position: absolute;
   bottom: 0;
   left: 0;
+  width: 100%;
+  height: 80px;
+  background: rgba(19, 21, 24, 0.95);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(255,255,255,0.05);
   display: flex;
   justify-content: space-around;
-  align-items: flex-start;
-  padding-top: 12px;
-  border-top: 1px solid rgba(255,255,255,0.05);
-  z-index: 100;
+  align-items: center;
+  padding-bottom: 20px; /* Home indicator space */
+  z-index: 40;
 }
 
+/* Home Indicator */
 .home-indicator {
   position: absolute;
   bottom: 8px;
   left: 50%;
   transform: translateX(-50%);
-  width: 134px;
+  width: 130px;
   height: 5px;
   background: white;
-  border-radius: 3px;
-  opacity: 0.4;
+  border-radius: 10px;
+  opacity: 0.3;
 }
 
-/* Chat Bubbles */
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
 .chat-bubble-user {
   background: var(--primary);
   color: white;
   border-radius: 20px 20px 4px 20px;
-  box-shadow: 0 4px 15px rgba(114, 65, 242, 0.3);
 }
 
 .chat-bubble-ai {
-  background: var(--surface);
-  color: var(--text-primary);
+  background: var(--surface-light);
+  color: var(--secondary);
   border-radius: 20px 20px 20px 4px;
-  border: 1px solid rgba(255,255,255,0.05);
 }
 
-/* Typing Indicator */
 .typing-indicator {
   display: flex;
   gap: 4px;
@@ -134,50 +156,43 @@ body {
   40% { transform: scale(1); }
 }
 
-/* Animations */
-.animate-fade-in {
-  animation: fadeIn 0.6s ease-out forwards;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
+/* Deep Mode Specifics */
 .deep-mode-container {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: #000;
-  z-index: 50;
+  z-index: 100;
+  background: var(--bg);
   display: flex;
   flex-direction: column;
 }
 
 .deep-mode-image {
-  width: 100%;
   height: 50%;
+  width: 100%;
   object-fit: cover;
-  mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
 }
 
 .deep-mode-text {
+  height: 50%;
   padding: 24px;
-  text-align: center;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  background: var(--bg);
+  overflow-y: auto;
 }
 
 /* Character Card */
 .character-card {
+  width: 100%;
+  height: 400px; /* Large poster height */
+  border-radius: 32px;
   position: relative;
   overflow: hidden;
   cursor: pointer;
+  border: 2px solid transparent;
   transition: transform 0.2s;
+  flex-shrink: 0;
 }
 
 .character-card:active {
@@ -244,21 +259,11 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-/* Page Transitions */
-.slide-out-left {
-  animation: slideOutLeft 0.5s forwards ease-in-out;
+@keyframes pushTransition {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1.05); opacity: 0; }
 }
 
-@keyframes slideOutLeft {
-  0% { transform: translateX(0); opacity: 1; }
-  100% { transform: translateX(-100%); opacity: 0; }
-}
-
-.slide-out-right {
-  animation: slideOutRight 0.5s forwards ease-in-out;
-}
-
-@keyframes slideOutRight {
-  0% { transform: translateX(0); opacity: 1; }
-  100% { transform: translateX(100%); opacity: 0; }
+.push-animation {
+  animation: pushTransition 0.5s ease-out forwards;
 }
